@@ -23,7 +23,7 @@ file_put_contents($phpStormRunner, $phpStormRunnerContents);
 // Include PhpStorm runner
 include($phpStormRunner);
 
-// Let's bake some CakePHP
+// Bootstrap CakePHP
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
 }
@@ -51,6 +51,12 @@ if (!defined('CAKE_CORE_INCLUDE_PATH')) {
         $failed = true;
     }
 }
+
+// full base url
+if (!defined('FULL_BASE_URL')) {
+    define('FULL_BASE_URL', 'http://localhost');
+}
+
 if (!empty($failed)) {
     trigger_error("CakePHP core could not be found.  Check the value of CAKE_CORE_INCLUDE_PATH in APP/webroot/index.php.  It should point to the directory containing your " . DS . "cake core directory and your " . DS . "vendors root directory.", E_USER_ERROR);
 }
@@ -59,18 +65,9 @@ if (Configure::read('debug') < 1) {
 }
 
 // Do some reconfiguration
-Configure::write('Error', array());
-Configure::write('Exception', array());
 
-// Bootstrap CakePHP
-require_once CAKE . 'TestSuite' . DS . 'CakeTestSuiteDispatcher.php';
 require_once CAKE . 'TestSuite' . DS . 'CakeTestSuiteDispatcher.php';
 require_once CAKE . 'TestSuite' . DS . 'Reporter' . DS . 'CakeTextReporter.php';
-
-// full base url
-if (!defined('FULL_BASE_URL')) {
-    define('FULL_BASE_URL', 'http://localhost');
-}
 
 class IDE_Cake_PHPUnit_Text_Reporter extends CakeTextReporter
 {
@@ -121,6 +118,7 @@ class IDE_Cake_PHPUnit_TextUI_Command extends CakeTestSuiteCommand
         $cleanedArgv[] = '--colors';
 
         // Run!
+        restore_error_handler();
         $command = new IDE_Cake_PHPUnit_TextUI_Command('CakeTestLoader', $cakePhpOptions);
         $command->run($cleanedArgv, $exit);
     }
