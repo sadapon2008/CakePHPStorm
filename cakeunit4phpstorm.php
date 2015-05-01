@@ -3,7 +3,7 @@
 $phpStormRunner = null;
 $cleanedArgv = array();
 foreach ($_SERVER['argv'] as $key => $value) {
-    if (strpos($value, 'ide-phpunit.php') === false) {
+    if (strpos($value, 'phpunit.php') === false) {
         $cleanedArgv[] = $value;
     } else {
         $phpStormRunner = $value;
@@ -19,9 +19,6 @@ $phpStormRunnerContents = file_get_contents($phpStormRunner);
 $phpStormRunnerContents = str_replace('IDE_PHPUnit_TextUI_Command::main', 'IDE_Cake_PHPUnit_TextUI_Command::main', $phpStormRunnerContents);
 $phpStormRunnerContents = str_replace('IDE_Cake_PHPUnit_TextUI_Command::main()', '//IDE_Cake_PHPUnit_TextUI_Command::main()', $phpStormRunnerContents);
 file_put_contents($phpStormRunner, $phpStormRunnerContents);
-
-// Include PhpStorm runner
-include($phpStormRunner);
 
 // Bootstrap CakePHP
 if (!defined('DS')) {
@@ -41,7 +38,7 @@ if (!defined('WWW_ROOT')) {
 }
 if (!defined('CAKE_CORE_INCLUDE_PATH')) {
     if (function_exists('ini_set')) {
-        ini_set('include_path', ROOT . DS . 'lib' . PATH_SEPARATOR . ini_get('include_path'));
+        ini_set('include_path', ROOT . DS . 'Vendor' . DS . 'cakephp' . DS . 'cakephp' . DS . 'lib' . PATH_SEPARATOR . ini_get('include_path'));
     }
     if (!include ('Cake' . DS . 'bootstrap.php')) {
         $failed = true;
@@ -63,6 +60,9 @@ if (!empty($failed)) {
 if (Configure::read('debug') < 1) {
     die(__d('cake_dev', 'Debug setting does not allow access to this url.'));
 }
+
+// Include PhpStorm runner
+include($phpStormRunner);
 
 // Do some reconfiguration
 
@@ -92,6 +92,7 @@ class IDE_Cake_PHPUnit_TextUI_Command extends CakeTestSuiteCommand
         );
         $cleanedArgv = array();
 
+        $prev_value = null;
         foreach ($_SERVER['argv'] as $value) {
             if (strstr($value, 'Test') && strstr($value, '/')) {
 
@@ -112,7 +113,11 @@ class IDE_Cake_PHPUnit_TextUI_Command extends CakeTestSuiteCommand
             } else if (strstr($value, '::')) {
                 $cleanedArgv[] = '--filter';
                 $cleanedArgv[] = substr($value, strpos($value, '::') + 2, strpos($value, '(') - 3);
+            } else if($prev_value === '--coverage-clover') {
+                $cleanedArgv[] = '--coverage-clover';
+                $cleanedArgv[] = $value;
             }
+            $prev_value = $value;
         }
         $cleanedArgv[] = '--stderr';
         $cleanedArgv[] = '--colors';
